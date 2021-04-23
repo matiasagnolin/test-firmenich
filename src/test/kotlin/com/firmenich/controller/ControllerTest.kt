@@ -1,9 +1,12 @@
 package com.firmenich.controller
 
+import com.firmenich.controllers.exceptions.ExpressionAlreadyExists
+import com.firmenich.controllers.exceptions.ExpressionNotFoundException
 import com.firmenich.dto.ArithmeticExpressionIdsDTO
 import com.firmenich.model.ArithmeticExpression
 import com.firmenich.services.ArithmeticExpressionReadService
 import com.firmenich.services.ArithmeticExpressionWriteService
+import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.whenever
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -14,9 +17,9 @@ import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.http.MediaType
 import org.springframework.test.context.junit4.SpringRunner
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
-import java.util.*
 
 @AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -56,7 +59,7 @@ class ControllerTest {
         val expression = "11+"
 
         whenever(arithmeticExpressionService.getExpressionById(1))
-            .thenReturn(Optional.of(ArithmeticExpression(id = 1, expression = expression)))
+            .thenReturn(ArithmeticExpression(id = 1, expression = expression))
         // when
         mockMvc.get("/expressions/1") {
             contentType = MediaType.APPLICATION_JSON
@@ -64,7 +67,7 @@ class ControllerTest {
         }.andExpect {
             // then
             status { isOk() }
-            content { json("""{"expression": 11+}""") }
+            content { expression }
         }
     }
 
@@ -72,9 +75,10 @@ class ControllerTest {
     fun `get expression by id should return 404`() {
         // given
         val id = 1
+        val message = "Expression not found"
 
         whenever(arithmeticExpressionService.getExpressionById(id))
-            .thenReturn(Optional.empty())
+            .thenThrow(ExpressionNotFoundException(message))
         // when
         mockMvc.get("/expressions/1") {
             contentType = MediaType.APPLICATION_JSON
@@ -82,7 +86,7 @@ class ControllerTest {
         }.andExpect {
             // then
             status { isNotFound() }
-            content { "Expression not found" }
+            content { message }
         }
     }
 
@@ -111,22 +115,90 @@ class ControllerTest {
 
     @Test
     fun `create expression should return 409`() {
+        // given
+        val message = "Expression already exists"
+
+        whenever(arithmeticExpressionWriteService.saveExpression(any()))
+            .thenThrow(ExpressionAlreadyExists(message))
+        // when
+        mockMvc.post("/expressions/1") {
+            contentType = MediaType.TEXT_PLAIN
+            content = "11+"
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            // then
+            status { isConflict() }
+            content { message}
+        }
     }
 
     @Test
     fun `delete expression by id should return 200`() {
+        // given
+        val message = "Expresion not found."
+        val id = 1
+        whenever(arithmeticExpressionWriteService.deleteExpression(id))
+            .thenThrow(ExpressionNotFoundException(message))
+        // when
+        mockMvc.delete("/expressions/1") {
+            contentType = MediaType.TEXT_PLAIN
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            // then
+            status { isNotFound() }
+            content { message }
+        }
     }
 
     @Test
     fun `delete expression by id should return 404`() {
+
+        // when
+        mockMvc.delete("/expressions/1") {
+            contentType = MediaType.TEXT_PLAIN
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            // then
+            status { isOk() }
+        }
     }
 
     @Test
     fun `expression evaluation should return 200`() {
+        // given
+        val id = 1
+        val result = "11.04166"
+
+        whenever(arithmeticExpressionService.evalExpression(id))
+            .thenReturn(result)
+        // when
+        mockMvc.get("/expressions/1/eval") {
+            contentType = MediaType.TEXT_PLAIN
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            // then
+            status { isOk() }
+            content { result }
+        }
     }
 
     @Test
     fun `expression evaluation should return 404`() {
+        // given
+        val id = 1
+        val message = "Expresion not found."
+
+        whenever(arithmeticExpressionService.evalExpression(id))
+            .thenThrow(ExpressionNotFoundException(message))
+        // when
+        mockMvc.get("/expressions/1/eval") {
+            contentType = MediaType.TEXT_PLAIN
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            // then
+            status { isNotFound() }
+            content { message }
+        }
     }
 
     @Test

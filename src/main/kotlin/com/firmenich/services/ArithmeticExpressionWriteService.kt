@@ -1,6 +1,7 @@
 package com.firmenich.services
 
 import com.firmenich.controllers.exceptions.ExpressionAlreadyExists
+import com.firmenich.controllers.exceptions.ExpressionNotFoundException
 import com.firmenich.model.ArithmeticExpression
 import com.firmenich.repositories.ExpressionRepository
 import org.slf4j.LoggerFactory
@@ -19,7 +20,13 @@ class ArithmeticExpressionWriteService {
         if (repository.existsById(arithmeticExpression.id)) {
             throw ExpressionAlreadyExists("Expression already exists.")
         }
-
         return repository.save(arithmeticExpression)
+    }
+
+    fun deleteExpression(id: Int) {
+        if (!repository.existsById(id)) {
+            throw ExpressionNotFoundException("Expression not found.")
+        }
+        repository.deleteById(id)
     }
 }

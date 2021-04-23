@@ -30,8 +30,6 @@ class ExpressionsController {
     @GetMapping("/{expressionId}")
     fun getExpressionById(@PathVariable(value = "expressionId") id: String): String {
         val response = readingService.getExpressionById(id.toInt())
-            .orElseThrow { ExpressionNotFoundException("Expression not found") }
-
         return response.expression
     }
 
@@ -42,5 +40,20 @@ class ExpressionsController {
     ): ResponseEntity<String> {
         writingService.saveExpression(ArithmeticExpression(id.toInt(), arithmeticExpression))
         return ResponseEntity("Expression created successfully", HttpStatus.OK)
+    }
+
+    @DeleteMapping("/{expressionId}")
+    fun deleteExpression(
+        @PathVariable(value = "expressionId") id: String
+    ): ResponseEntity<String> {
+        writingService.deleteExpression(id.toInt())
+        return ResponseEntity("Expression deleted successfully.", HttpStatus.OK)
+    }
+
+    @GetMapping("/{expressionId}/eval")
+    fun evalExpression(
+        @PathVariable(value = "expressionId") id: String
+    ): String {
+        return readingService.evalExpression(id.toInt())
     }
 }
