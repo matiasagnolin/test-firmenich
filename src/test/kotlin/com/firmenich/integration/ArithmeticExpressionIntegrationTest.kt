@@ -1,5 +1,8 @@
 package com.firmenich.integration
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.firmenich.dto.OperatorDTO
+import com.firmenich.dto.ValueDTO
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -18,6 +21,9 @@ class ArithmeticExpressionIntegrationTest {
 
     @Autowired
     private lateinit var mockMvc: MockMvc
+
+    val mapper = ObjectMapper()
+
 
     @Test
     fun `integration test`() {
@@ -40,7 +46,7 @@ class ArithmeticExpressionIntegrationTest {
                 // when
                 mockMvc.post("/expressions/$id/push_value") {
                     contentType = MediaType.APPLICATION_JSON
-                    content = it
+                    content = mapper.writeValueAsString(ValueDTO(it))
                     accept = MediaType.APPLICATION_JSON
                 }.andExpect {
                     // then
@@ -49,7 +55,7 @@ class ArithmeticExpressionIntegrationTest {
             } else {
                 mockMvc.post("/expressions/$id/push_operator") {
                     contentType = MediaType.APPLICATION_JSON
-                    content = it
+                    content = mapper.writeValueAsString(OperatorDTO(it))
                     accept = MediaType.APPLICATION_JSON
                 }.andExpect {
                     // then

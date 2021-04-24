@@ -1,9 +1,12 @@
 package com.firmenich.controller
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.firmenich.controllers.exceptions.ExpressionAlreadyExists
 import com.firmenich.controllers.exceptions.ExpressionNotFoundException
 import com.firmenich.controllers.exceptions.OperatorNotValidAtThisPointException
 import com.firmenich.dto.ArithmeticExpressionIdsDTO
+import com.firmenich.dto.OperatorDTO
+import com.firmenich.dto.ValueDTO
 import com.firmenich.model.ArithmeticExpression
 import com.firmenich.services.ArithmeticExpressionPushService
 import com.firmenich.services.ArithmeticExpressionReadService
@@ -40,6 +43,8 @@ class ControllerTest {
 
     @Autowired
     private lateinit var mockMvc: MockMvc
+    
+    val mapper = ObjectMapper()
 
     @Test
     fun `get expressions ids list should return 200`() {
@@ -215,7 +220,7 @@ class ControllerTest {
     fun `operation push value should return 200`() {
         // given
         val id = 1
-        val value = "{value: 1}"
+        val value = mapper.writeValueAsString(ValueDTO("1"))
         val expression = "11+1"
 
         whenever(arithmeticExpressionPushService.pushValuebyId(id, "1"))
@@ -255,8 +260,7 @@ class ControllerTest {
     @Test
     fun `operation push value should return 404`() {
         // given
-        val id = 1
-        val value = "{value: 1}"
+        val value = mapper.writeValueAsString(ValueDTO("1"))
         val message = "Expression not found."
 
         whenever(arithmeticExpressionPushService.pushValuebyId(any(), any()))
@@ -277,7 +281,7 @@ class ControllerTest {
     fun `operation push operator should return 200`() {
         // given
         val id = 1
-        val value = "{operator: -}"
+        val value = mapper.writeValueAsString(OperatorDTO("-"))
         val expression = "11+1-"
 
         whenever(arithmeticExpressionPushService.pushValuebyId(any(), any()))
@@ -297,7 +301,7 @@ class ControllerTest {
     @Test
     fun `operation push operator should return 400`() {
         // given
-        val value = "{value: ?}"
+        val value = OperatorDTO("?")
         val message = "Invalid operator."
 
         whenever(arithmeticExpressionPushService.pushValuebyId(any(), any()))
@@ -317,14 +321,13 @@ class ControllerTest {
     @Test
     fun `operation push operator should return 404`() {
         // given
-        val id = 1
-        val value = "{value: *}"
+        val value = mapper.writeValueAsString(OperatorDTO("*"))
         val message = "Expression not found."
 
-        whenever(arithmeticExpressionPushService.pushValuebyId(any(), any()))
+        whenever(arithmeticExpressionPushService.pushOperatorbyId(any(), any()))
             .thenThrow(ExpressionNotFoundException(message))
         // when
-        mockMvc.post("/expressions/1/push_value") {
+        mockMvc.post("/expressions/1/push_operator") {
             contentType = MediaType.APPLICATION_JSON
             content = value
             accept = MediaType.APPLICATION_JSON
@@ -338,15 +341,14 @@ class ControllerTest {
     @Test
     fun `operation push operator should return 409`() {
         // given
-        val id = 1
-        val value = "{value: *}"
+        val value = mapper.writeValueAsString(OperatorDTO("*"))
         val message =
             "Invalid operation (The expression cannot receive an operator at this point)."
 
-        whenever(arithmeticExpressionPushService.pushValuebyId(any(), any()))
+        whenever(arithmeticExpressionPushService.pushOperatorbyId(any(), any()))
             .thenThrow(OperatorNotValidAtThisPointException(message))
         // when
-        mockMvc.post("/expressions/1/push_value") {
+        mockMvc.post("/expressions/1/push_operator") {
             contentType = MediaType.APPLICATION_JSON
             content = value
             accept = MediaType.APPLICATION_JSON

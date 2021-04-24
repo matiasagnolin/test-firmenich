@@ -35,7 +35,7 @@ class ExpressionsController {
     @GetMapping("/{expressionId}")
     fun getExpressionById(@PathVariable(value = "expressionId") id: String): String {
         val response = readingService.getExpressionById(id.toInt())
-        return response.expression
+        return response.expressionWithOutSeparator
     }
 
     @PostMapping("/{expressionId}")

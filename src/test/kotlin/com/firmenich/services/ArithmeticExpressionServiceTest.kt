@@ -113,20 +113,20 @@ class ArithmeticExpressionServiceTest {
     @Test
     fun `should evaluate expression correctly`() {
         // given
-        var arithmeticExpression = ArithmeticExpression(7, "512+4*+3-")
+        var arithmeticExpression = ArithmeticExpression(7, "5,1,2,+,4,*,+,3,-")
 
         // when
         arithmeticExpressionWriteService.saveExpression(arithmeticExpression)
         var result = arithmeticExpressionReadService.evalExpression(arithmeticExpression.id)
 
         //then
-        Assert.assertEquals("-14.0", result)
+        Assert.assertEquals("3", result)
     }
 
     @Test(expected = NoSuchElementException::class)
     fun `evaluation should throw Exception`() {
         // given
-        var arithmeticExpression = ArithmeticExpression(15, "512+4*+3--")
+        var arithmeticExpression = ArithmeticExpression(15, "5,1,2,+,4,*,+,3,-,-,-")
 
         // when
         arithmeticExpressionWriteService.saveExpression(arithmeticExpression)
@@ -146,20 +146,20 @@ class ArithmeticExpressionServiceTest {
         var result = arithmeticExpressionPushervice.pushValuebyId(8, "4")
 
         //then
-        Assert.assertEquals("32+5*64*/10+4", result.expression)
+        Assert.assertEquals("32+5*64*/10+4", result.expressionWithOutSeparator)
     }
 
     @Test
     fun `should push operator correctly`() {
         // given
-        var arithmeticExpression = ArithmeticExpression(9, "32+5*64*/10+")
+        var arithmeticExpression = ArithmeticExpression(9, "3,2,+,5,*,6,4,*,/,10,")
         arithmeticExpressionWriteService.saveExpression(arithmeticExpression)
 
         // when
-        var result = arithmeticExpressionPushervice.pushOperatorbyId(9, "-")
+        var result = arithmeticExpressionPushervice.pushOperatorbyId(9, "+")
 
         //then
-        Assert.assertEquals("32+5*64*/10+-", result.expression)
+        Assert.assertEquals("32+5*64*/10+", result.expressionWithOutSeparator)
     }
 
     @Test(expected = IllegalArgumentException::class)

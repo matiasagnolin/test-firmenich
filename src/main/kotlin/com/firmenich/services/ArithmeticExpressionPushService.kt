@@ -18,7 +18,7 @@ class ArithmeticExpressionPushService {
 
     fun pushValuebyId(id: Int, value: String): ArithmeticExpression {
         value.toIntOrNull() ?: throw IllegalArgumentException("Invalid value.")
-        val newArithmeticExpression = getNewArithmeticExpression(id, value)
+        val newArithmeticExpression = getNewArithmeticExpression(id, "$value,")
         return arithmeticExpressionWriteService
             .updateExpression(newArithmeticExpression)
     }
@@ -30,7 +30,7 @@ class ArithmeticExpressionPushService {
             throw IllegalArgumentException("Invalid operator.")
         }
 
-        val newArithmeticExpression = getNewArithmeticExpression(id, value)
+        val newArithmeticExpression = getNewArithmeticExpression(id, "$value,")
         try {
             newArithmeticExpression.evalExpression()
         } catch (ex: NoSuchElementException) {

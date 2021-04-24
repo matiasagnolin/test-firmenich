@@ -13,8 +13,10 @@ class ArithmeticExpression(
     val id: Int = 0,
 
     @Column(name = "expression")
-    val expression: String = "",
+    val expression: String = ""
 ) {
+    val expressionWithOutSeparator = expression.replace(",", "")
+
     @Transient
     private val stack = ArrayDeque<String>()
 
@@ -35,13 +37,13 @@ class ArithmeticExpression(
     }
 
     fun evalExpression(): String {
-        val str = expression
+        val str = expression.substring(0, expression.lastIndexOf(","))
 
         if (str.toCharArray().isEmpty()) {
             return "0"
         }
 
-        list = str.toList().stream()
+        list = str.split(",").toList().stream()
             .map { item -> item.toString() }
             .collect(Collectors.toList())
 
@@ -51,7 +53,7 @@ class ArithmeticExpression(
             } else {
                 val result =
                     calculate(stack.removeLast().toDouble(), stack.removeLast().toDouble(), operationsMap[it]!!)
-                stack.addLast(result.toString())
+                stack.addFirst(result.toString())
             }
         }
         return stack.last()
