@@ -10,12 +10,14 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import org.junit.Assert
+import java.lang.IllegalArgumentException
 
 /**
  * since service layer isn't that big I test the repository layer here too
  * and to avoid overhead with @DirtiesContext or sql cleaner scripts
  * I decided to use spring.jpa.hibernate.ddl-auto=create
- * and a different ID in each test
+ * and a different ID in each test. In case of other people work on this project too,
+ * for maintainability reasons, the db must be clean before each test.
  */
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -30,6 +32,9 @@ class ArithmeticExpressionServiceTest {
 
     @Autowired
     private lateinit var arithmeticExpressionReadService: ArithmeticExpressionReadService
+
+    @Autowired
+    private lateinit var arithmeticExpressionPushervice: ArithmeticExpressionPushService
 
     @Test
     fun `should save expression service successfully `() {
@@ -116,5 +121,96 @@ class ArithmeticExpressionServiceTest {
 
         //then
         Assert.assertEquals("-14.0", result)
+    }
+
+    @Test(expected = NoSuchElementException::class)
+    fun `evaluation should throw Exception`() {
+        // given
+        var arithmeticExpression = ArithmeticExpression(15, "512+4*+3--")
+
+        // when
+        arithmeticExpressionWriteService.saveExpression(arithmeticExpression)
+        var result = arithmeticExpressionReadService.evalExpression(arithmeticExpression.id)
+
+        //then
+        Assert.fail()
+    }
+
+    @Test
+    fun `should push value correctly`() {
+        // given
+        var arithmeticExpression = ArithmeticExpression(8, "32+5*64*/10+")
+        arithmeticExpressionWriteService.saveExpression(arithmeticExpression)
+
+        // when
+        var result = arithmeticExpressionPushervice.pushValuebyId(8, "4")
+
+        //then
+        Assert.assertEquals("32+5*64*/10+4", result.expression)
+    }
+
+    @Test
+    fun `should push operator correctly`() {
+        // given
+        var arithmeticExpression = ArithmeticExpression(9, "32+5*64*/10+")
+        arithmeticExpressionWriteService.saveExpression(arithmeticExpression)
+
+        // when
+        var result = arithmeticExpressionPushervice.pushOperatorbyId(9, "-")
+
+        //then
+        Assert.assertEquals("32+5*64*/10+-", result.expression)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `should throw exception for invalid value`() {
+        // given
+        var arithmeticExpression = ArithmeticExpression(10, "32+5*64*/10+")
+        arithmeticExpressionWriteService.saveExpression(arithmeticExpression)
+
+        // when
+         arithmeticExpressionPushervice.pushValuebyId(10, "#")
+
+        //then
+        Assert.fail()
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `should throw exception for invalid operator`() {
+        // given
+        var arithmeticExpression = ArithmeticExpression(11, "32+5*64*/10+")
+        arithmeticExpressionWriteService.saveExpression(arithmeticExpression)
+
+        // when
+        arithmeticExpressionPushervice.pushOperatorbyId(11, "=")
+
+        //then
+        Assert.fail()
+    }
+
+    @Test(expected = ExpressionNotFoundException::class)
+    fun `push operator should throw exception expression not found`() {
+        // given
+        var arithmeticExpression = ArithmeticExpression(12, "32+5*64*/10+")
+        arithmeticExpressionWriteService.saveExpression(arithmeticExpression)
+
+        // when
+         arithmeticExpressionPushervice.pushOperatorbyId(13, "/")
+
+        //then
+        Assert.fail()
+    }
+
+    @Test(expected = ExpressionNotFoundException::class)
+    fun `push value should throw exception expression not found`() {
+        // given
+        var arithmeticExpression = ArithmeticExpression(13, "32+5*64*/10+")
+        arithmeticExpressionWriteService.saveExpression(arithmeticExpression)
+
+        // when
+         arithmeticExpressionPushervice.pushValuebyId(14, "5")
+
+        //then
+        Assert.fail()
     }
 }

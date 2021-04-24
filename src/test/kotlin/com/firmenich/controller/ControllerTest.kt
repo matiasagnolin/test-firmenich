@@ -2,8 +2,10 @@ package com.firmenich.controller
 
 import com.firmenich.controllers.exceptions.ExpressionAlreadyExists
 import com.firmenich.controllers.exceptions.ExpressionNotFoundException
+import com.firmenich.controllers.exceptions.OperatorNotValidAtThisPointException
 import com.firmenich.dto.ArithmeticExpressionIdsDTO
 import com.firmenich.model.ArithmeticExpression
+import com.firmenich.services.ArithmeticExpressionPushService
 import com.firmenich.services.ArithmeticExpressionReadService
 import com.firmenich.services.ArithmeticExpressionWriteService
 import com.nhaarman.mockitokotlin2.any
@@ -20,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
+import java.lang.IllegalArgumentException
 
 @AutoConfigureMockMvc
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -31,6 +34,9 @@ class ControllerTest {
 
     @MockBean
     private lateinit var arithmeticExpressionWriteService: ArithmeticExpressionWriteService
+
+    @MockBean
+    private lateinit var arithmeticExpressionPushService: ArithmeticExpressionPushService
 
     @Autowired
     private lateinit var mockMvc: MockMvc
@@ -128,7 +134,7 @@ class ControllerTest {
         }.andExpect {
             // then
             status { isConflict() }
-            content { message}
+            content { message }
         }
     }
 
@@ -207,30 +213,148 @@ class ControllerTest {
 
     @Test
     fun `operation push value should return 200`() {
+        // given
+        val id = 1
+        val value = "{value: 1}"
+        val expression = "11+1"
+
+        whenever(arithmeticExpressionPushService.pushValuebyId(id, "1"))
+            .thenReturn(ArithmeticExpression(id, expression))
+        // when
+        mockMvc.post("/expressions/1/push_value") {
+            contentType = MediaType.APPLICATION_JSON
+            content = value
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            // then
+            status { isOk() }
+            content { expression }
+        }
     }
 
     @Test
     fun `operation push value should return 400`() {
+        // given
+        val value = "{value: *}"
+        val message = "Invalid value."
+
+        whenever(arithmeticExpressionPushService.pushValuebyId(any(), any()))
+            .thenThrow(IllegalArgumentException(message))
+        // when
+        mockMvc.post("/expressions/1/push_value") {
+            contentType = MediaType.APPLICATION_JSON
+            content = value
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            // then
+            status { isBadRequest() }
+            content { message }
+        }
     }
 
     @Test
     fun `operation push value should return 404`() {
+        // given
+        val id = 1
+        val value = "{value: 1}"
+        val message = "Expression not found."
+
+        whenever(arithmeticExpressionPushService.pushValuebyId(any(), any()))
+            .thenThrow(ExpressionNotFoundException(message))
+        // when
+        mockMvc.post("/expressions/1/push_value") {
+            contentType = MediaType.APPLICATION_JSON
+            content = value
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            // then
+            status { isNotFound() }
+            content { message }
+        }
     }
 
     @Test
     fun `operation push operator should return 200`() {
+        // given
+        val id = 1
+        val value = "{operator: -}"
+        val expression = "11+1-"
+
+        whenever(arithmeticExpressionPushService.pushValuebyId(any(), any()))
+            .thenReturn(ArithmeticExpression(id, expression))
+        // when
+        mockMvc.post("/expressions/1/push_operator") {
+            contentType = MediaType.APPLICATION_JSON
+            content = value
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            // then
+            status { isOk() }
+            content { expression }
+        }
     }
 
     @Test
     fun `operation push operator should return 400`() {
+        // given
+        val value = "{value: ?}"
+        val message = "Invalid operator."
+
+        whenever(arithmeticExpressionPushService.pushValuebyId(any(), any()))
+            .thenThrow(IllegalArgumentException(message))
+        // when
+        mockMvc.post("/expressions/1/push_value") {
+            contentType = MediaType.APPLICATION_JSON
+            content = value
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            // then
+            status { isBadRequest() }
+            content { message }
+        }
     }
 
     @Test
     fun `operation push operator should return 404`() {
+        // given
+        val id = 1
+        val value = "{value: *}"
+        val message = "Expression not found."
+
+        whenever(arithmeticExpressionPushService.pushValuebyId(any(), any()))
+            .thenThrow(ExpressionNotFoundException(message))
+        // when
+        mockMvc.post("/expressions/1/push_value") {
+            contentType = MediaType.APPLICATION_JSON
+            content = value
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            // then
+            status { isNotFound() }
+            content { message }
+        }
     }
 
     @Test
-    fun `operation push value should return 409`() {
+    fun `operation push operator should return 409`() {
+        // given
+        val id = 1
+        val value = "{value: *}"
+        val message =
+            "Invalid operation (The expression cannot receive an operator at this point)."
+
+        whenever(arithmeticExpressionPushService.pushValuebyId(any(), any()))
+            .thenThrow(OperatorNotValidAtThisPointException(message))
+        // when
+        mockMvc.post("/expressions/1/push_value") {
+            contentType = MediaType.APPLICATION_JSON
+            content = value
+            accept = MediaType.APPLICATION_JSON
+        }.andExpect {
+            // then
+            status { isConflict() }
+            content { message }
+        }
     }
 
 }

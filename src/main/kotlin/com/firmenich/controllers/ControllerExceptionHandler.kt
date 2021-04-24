@@ -2,6 +2,7 @@ package com.firmenich.controllers
 
 import com.firmenich.controllers.exceptions.ExpressionAlreadyExists
 import com.firmenich.controllers.exceptions.ExpressionNotFoundException
+import com.firmenich.controllers.exceptions.OperatorNotValidAtThisPointException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ControllerAdvice
@@ -26,6 +27,11 @@ class ControllerExceptionHandler {
 
     @ExceptionHandler(ExpressionAlreadyExists::class)
     fun expressionAlreadyExists(ex: ExpressionAlreadyExists, request: WebRequest): ResponseEntity<String> {
+        return ResponseEntity<String>(ex.message, HttpStatus.CONFLICT)
+    }
+
+    @ExceptionHandler(OperatorNotValidAtThisPointException::class)
+    fun operatorNotvalidAtThisPoint(ex: OperatorNotValidAtThisPointException, request: WebRequest): ResponseEntity<String> {
         return ResponseEntity<String>(ex.message, HttpStatus.CONFLICT)
     }
 }

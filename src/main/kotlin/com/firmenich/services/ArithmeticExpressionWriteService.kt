@@ -23,6 +23,13 @@ class ArithmeticExpressionWriteService {
         return repository.save(arithmeticExpression)
     }
 
+    fun updateExpression(arithmeticExpression: ArithmeticExpression): ArithmeticExpression {
+        if (!repository.existsById(arithmeticExpression.id)) {
+            throw ExpressionNotFoundException("Expression already exists.")
+        }
+        return repository.save(arithmeticExpression)
+    }
+
     fun deleteExpression(id: Int) {
         if (!repository.existsById(id)) {
             throw ExpressionNotFoundException("Expression not found.")

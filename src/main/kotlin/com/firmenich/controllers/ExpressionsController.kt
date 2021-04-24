@@ -1,9 +1,11 @@
 package com.firmenich.controllers
 
 
-import com.firmenich.controllers.exceptions.ExpressionNotFoundException
 import com.firmenich.dto.ArithmeticExpressionIdsDTO
+import com.firmenich.dto.OperatorDTO
+import com.firmenich.dto.ValueDTO
 import com.firmenich.model.ArithmeticExpression
+import com.firmenich.services.ArithmeticExpressionPushService
 import com.firmenich.services.ArithmeticExpressionReadService
 import com.firmenich.services.ArithmeticExpressionWriteService
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,6 +24,9 @@ class ExpressionsController {
     @Autowired
     private lateinit var writingService: ArithmeticExpressionWriteService
 
+    @Autowired
+    private lateinit var pushService: ArithmeticExpressionPushService
+
     @GetMapping
     fun getExpressionsIds(): ArithmeticExpressionIdsDTO {
         return readingService.getExpressions()
@@ -36,9 +41,8 @@ class ExpressionsController {
     @PostMapping("/{expressionId}")
     fun createExpression(
         @PathVariable(value = "expressionId") id: String,
-        @RequestBody arithmeticExpression: String
     ): ResponseEntity<String> {
-        writingService.saveExpression(ArithmeticExpression(id.toInt(), arithmeticExpression))
+        writingService.saveExpression(ArithmeticExpression(id.toInt()))
         return ResponseEntity("Expression created successfully", HttpStatus.OK)
     }
 
@@ -55,5 +59,23 @@ class ExpressionsController {
         @PathVariable(value = "expressionId") id: String
     ): String {
         return readingService.evalExpression(id.toInt())
+    }
+
+    @PostMapping("/{expressionId}/push_value")
+    fun pushValue(
+        @PathVariable(value = "expressionId") id: String,
+        @RequestBody value: ValueDTO
+    ): ResponseEntity<String> {
+        pushService.pushValuebyId(id.toInt(), value.value)
+        return ResponseEntity("Value successfully pushed.", HttpStatus.OK)
+    }
+
+    @PostMapping("/{expressionId}/push_operator")
+    fun pushOperator(
+        @PathVariable(value = "expressionId") id: String,
+        @RequestBody operator: OperatorDTO
+    ): ResponseEntity<String> {
+        pushService.pushOperatorbyId(id.toInt(), operator.operator)
+        return ResponseEntity("operator successfully pushed.", HttpStatus.OK)
     }
 }
