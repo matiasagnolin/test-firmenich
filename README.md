@@ -20,3 +20,6 @@ with SDKMAN:
 if gradle is not found you should set the env var:
 
 export GRADLE_HOME=/home/<User>/.sdkman/candidates/gradle/current/bin/gradl
+
+
+
